@@ -266,7 +266,7 @@ const I18N = {
     },
     placeholderLines: [
       "{{title}} = 文件名",
-      "{{folderName}} = 所在文件夹名（索引文件里是索引文件名）",
+      "{{folderName}} = 所在文件夹名",
       "{{parentName}} = 实际文件夹名",
       "{{folder}} = 父路径，{{path}} = 完整路径",
       "{{date}} = 创建日期，{{time}} = 创建时间，{{datetime}} = 日期 + 时间",
@@ -476,7 +476,7 @@ const I18N = {
     },
     placeholderLines: [
       "{{title}} = file name",
-      "{{folderName}} = parent folder name (index note's own name for index files)",
+      "{{folderName}} = parent folder name",
       "{{parentName}} = actual folder name",
       "{{folder}} = parent path, {{path}} = full path",
       "{{date}} = created date, {{time}} = created time, {{datetime}} = date + time",
@@ -1463,7 +1463,7 @@ class FolderForgePlugin extends Plugin {
     const now = new Date();
     const title = node.name.replace(/\.md$/i, "");
     const actualFolderName = parentPath ? parentPath.split("/").pop() : "";
-    const folderName = node.isIndex ? title : actualFolderName;
+    const folderName = actualFolderName;
     const dateValue = formatDateValue(now, settings);
     const timeValue = formatTimeValue(now, settings);
     const values = {

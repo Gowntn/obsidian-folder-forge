@@ -118,7 +118,7 @@ Same-name conflicts, missing target folders and existing index notes are all rep
 
 `{{title}}`, `{{folderName}}`, `{{parentName}}`, `{{folder}}`, `{{path}}`, `{{date}}`, `{{time}}`, `{{datetime}}`
 
-For index notes, `{{title}}` and `{{folderName}}` are the index file name (for example `README`), while `{{parentName}}` is the folder name.
+For index notes, `{{title}}` is the index file name (for example `README`), while `{{folderName}}` and `{{parentName}}` are the folder name.
 
 ## Folder index notes
 
@@ -223,7 +223,7 @@ BRAT：添加 `Gowntn/obsidian-folder-forge` 后启用。
 
 `{{title}}`、`{{folderName}}`、`{{parentName}}`、`{{folder}}`、`{{path}}`、`{{date}}`、`{{time}}`、`{{datetime}}`
 
-索引笔记里 `{{title}}` 和 `{{folderName}}` 是索引文件名（如 `README`），`{{parentName}}` 才是文件夹名。
+索引笔记里 `{{title}}` 是索引文件名（如 `README`），`{{folderName}}` 和 `{{parentName}}` 都是文件夹名。
 
 ### 文件夹索引
 
