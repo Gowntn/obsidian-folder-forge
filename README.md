@@ -1,28 +1,171 @@
-# Folder Forge（目录生成器）
+# Folder Forge
 
-**简体中文** ｜ [English](README.en.md)
+**English** ｜ [简体中文](#简体中文)
 
-一次把目录树写出来，让插件帮你建好文件夹和笔记。
+Create folder trees and Markdown notes from an indented outline or a name list. Built on the Obsidian Vault API, so everything appears in the file explorer immediately — no restart needed.
+
+## Features
+
+- Four input modes: Auto, Tree, Folders, Notes
+- Vault-relative target path with a folder picker
+- Existing note handling: ask / skip / overwrite / abort
+- Folder index notes (folder notes): same name as the folder or `README.md`
+- Separate content for new notes and index notes: empty / custom text / template file
+- Placeholders for file names, folders, paths and date/time
+- Chinese and English UI, following Obsidian's language
+- Works on desktop and mobile
+
+## Modes
+
+### Auto (default)
+
+No `.md` needed: nodes with children become folders, leaves become `.md` notes. Append `/` to force a folder.
+
+```
+ProjectA
+  Docs
+    readme
+  Code
+ProjectB
+  Backup/
+  Notes
+```
+
+Creates `ProjectA/Docs/readme.md`, `ProjectA/Code.md`, `ProjectB/Backup/` (empty folder), `ProjectB/Notes.md`.
+
+### Tree
+
+Indentation defines the hierarchy; names ending in `.md` are notes, everything else is a folder. Dots in names (`v1.2 Specs`) no longer turn a folder into a note.
+
+```
+ProjectA
+  Docs
+    readme.md
+  Code
+ProjectB
+  Notes.md
+```
+
+### Folders / Notes
+
+Separate entries with commas or newlines; a line starting with `# ` is a comment. Nested paths are supported:
+
+```
+ProjectA, ProjectB, Archive/
+Notes/2026/11
+```
+
+## Installation
+
+### Manual
+
+1. Download `main.js`, `manifest.json` and `styles.css` from [Releases](https://github.com/Gowntn/obsidian-folder-forge/releases)
+2. Put them in `<vault>/.obsidian/plugins/folder-forge/`
+3. Open **Settings → Community plugins** and enable **Folder Forge**
+
+### BRAT
+
+Add `Gowntn/obsidian-folder-forge` in BRAT, then enable the plugin.
+
+## Usage
+
+1. Open **Settings → Folder Forge**
+2. Choose the target folder (empty = vault root) and a create mode
+3. Paste an outline or a name list into the text box
+4. Click **Create now**
+
+Example: choose **Auto**, paste
+
+```
+Journal
+  2026
+    January
+    February
+```
+
+and the plugin creates `Journal/2026/January.md` and `Journal/2026/February.md`.
+
+Same-name conflicts, missing target folders and existing index notes are all reported in a summary notice at the end.
+
+## Settings
+
+| Setting | Description |
+| --- | --- |
+| Target folder | Vault-relative path; empty = vault root |
+| Create mode | Auto / Tree / Folders / Notes |
+| Content source | Empty / custom text / template file |
+| Replace placeholders | Placeholder replacement for new notes |
+| When a note already exists | Ask / Skip / Overwrite / Abort |
+| When the target folder is missing | Ask / Create / Abort |
+| Create index notes | Add an index note for every new folder |
+| Index file name | Same as folder / README.md |
+| Scope | Every folder / bottom level only / top level only |
+| Index content source | Separate content settings for index notes |
+| Date order and separator | Year-month-day, month-day-year (US), day-month-year (EU) |
+| Month style | Numbers (11) / short name (Nov) / full name (November) |
+| Time | Include or not, minutes or seconds, separator |
+| Show ribbon button | Show or hide the sidebar button |
+
+## Date and time
+
+- ISO 8601: `2026-11-19`
+- US: `11/19/2026`
+- Europe: `19/11/2026` or `19.11.2026`
+- English months: `Nov 19, 2026`, `19 Nov 2026`, `Nov/19/2026`
+- Time in 24-hour format: `14:05` or `14:05:33`
+
+## Placeholders
+
+`{{title}}`, `{{folderName}}`, `{{parentName}}`, `{{folder}}`, `{{path}}`, `{{date}}`, `{{time}}`, `{{datetime}}`
+
+For index notes, `{{title}}` and `{{folderName}}` are the index file name (for example `README`), while `{{parentName}}` is the folder name.
+
+## Folder index notes
+
+An index note is the usual folder note: an entry point for the folder where you keep an overview, links, tags or TODOs. Only folders created in the current run get one; existing folders are left alone.
+
+## Behavior notes
+
+- A read-only preflight runs first; all dialogs appear before anything is written
+- Existing folders are reused, never recreated
+- Overwriting an existing note cannot be undone
+- A note and a folder with the same name can coexist (`A.md` and `A/`)
+- Tab inserts indentation, Shift+Tab outdents
+- Illegal characters, reserved Windows names and `..` paths are skipped and summarized
+
+## Compatibility
+
+- Obsidian 1.5.0 or newer
+- Desktop and mobile (no Node `fs`)
+
+## License and credits
+
+Released under the [MIT](LICENSE) license.
+
+The first version was based on the "auto generate folders" plugin by the Bilibili creator 拈花赛博行; this version is a rewrite and extension of that idea.
+
+---
+
+## 简体中文
+
+把目录树写出来，让插件帮你建好文件夹和笔记。
 
 从一段缩进文本或名称列表，批量创建文件夹与 Markdown 笔记。基于 Obsidian 的 Vault API，创建后立即出现在文件浏览器里，不需要重启。
 
-## 功能
+### 功能
 
 - 四种输入模式：自动识别、树形结构、简单文件夹、简单文件
 - 目标位置用仓库相对路径，默认仓库根目录，也可以用文件夹选择器
 - 同名文件处理：询问 / 跳过 / 覆盖 / 终止
-- 目标目录不存在时：询问 / 直接创建 / 终止
-- 文件夹索引（folder note）：与文件夹同名或 `README.md`，可只给顶层或底层生成
+- 文件夹索引（folder note）：与文件夹同名或 `README.md`
 - 新建笔记和索引笔记的初始内容分开设置：空白 / 自定义文本 / 模板文件
-- 占位符：文件名、文件夹名、路径、日期时间；日期支持中英格式
-- 界面中英文，跟随 Obsidian 语言自动切换
+- 占位符：文件名、文件夹名、路径、日期时间
+- 界面中英文，跟随 Obsidian 语言
 - 桌面端和移动端都能用
 
-## 四种模式
+### 四种模式
 
-### 🧠 自动识别（默认）
-
-不写 `.md`：有下级的当文件夹，最底层的当 md 文件；名字后面加 `/` 可以强制当文件夹。
+**自动识别（默认）**：不写 `.md`，有下级的当文件夹，最底层的当 md 文件；名字后面加 `/` 可以强制当文件夹。
 
 ```
 项目A
@@ -34,139 +177,72 @@
   笔记
 ```
 
-生成：`项目A/文档/readme.md`、`项目A/代码.md`、`项目B/备份/`（空文件夹）、`项目B/笔记.md`。
+生成：`项目A/文档/readme.md`、`项目A/代码.md`、`项目B/备份/`、`项目B/笔记.md`。
 
-### 🌳 树形结构
+**树形结构**：用缩进表示层级，`.md` 结尾的是文件，其余是文件夹。
 
-用缩进表示层级，`.md` 结尾的是文件，其余是文件夹。名字里带点（如 `v1.2 需求`）不会再被误判成文件。
+**简单文件夹 / 简单文件**：用逗号、顿号或换行分隔，支持 `a/b/c` 嵌套和 `a/b.md` 显式文件。
 
-```
-项目A
-  文档
-    readme.md
-  代码
-项目B
-  笔记.md
-```
-
-### 📂 简单文件夹 / 📄 简单文件
-
-用逗号、顿号或换行分隔，`# ` 开头的整行是注释。两种模式都支持嵌套路径：
-
-```
-项目A, 项目B、归档/
-笔记/2026/11
-```
-
-- 简单文件夹：默认建文件夹，也可以写 `子目录/名称.md` 建文件
-- 简单文件：默认建 md，也可以写 `子目录/名称/` 建文件夹
-
-## 安装
-
-### 手动安装
+### 安装
 
 1. 从 [Releases](https://github.com/Gowntn/obsidian-folder-forge/releases) 下载 `main.js`、`manifest.json`、`styles.css`
 2. 放进仓库的 `.obsidian/plugins/folder-forge/` 目录
 3. 打开「设置 → 第三方插件」，启用 **Folder Forge**
 
-### BRAT（仓库发布后）
+BRAT：添加 `Gowntn/obsidian-folder-forge` 后启用。
 
-在 BRAT 里添加 `Gowntn/obsidian-folder-forge`，然后启用。
+### 使用
 
-### 不需要构建
+1. 打开「设置 → Folder Forge」
+2. 选择目标目录（留空 = 仓库根目录）和创建模式
+3. 把目录树或名称列表粘贴进输入框
+4. 点「立即创建」
 
-`main.js` 是可直接加载的 CommonJS 文件，改了保存、禁用再启用插件即可生效。
+例如选「自动识别」，粘贴：
 
-## 设置
+```
+日记
+  2026
+    一月
+    二月
+```
 
-| 设置 | 说明 |
-| --- | --- |
-| 目标目录 | 仓库相对路径，留空 = 仓库根目录；可点「选择文件夹」 |
-| 创建模式 | 自动识别 / 树形结构 / 简单文件夹 / 简单文件 |
-| 内容来源 | 新建笔记的内容：空白 / 自定义文本 / 模板文件 |
-| 替换占位符 | 控制新建笔记的占位符替换 |
-| 模板文件 | 模板模式必填，行尾「确定」按钮可校验能否读到 |
-| 同名文件已存在时 | 弹对话框 / 跳过 / 覆盖 / 终止（只针对文件，已存在的文件夹直接复用） |
-| 目标目录不存在时 | 弹对话框 / 直接创建 / 终止 |
-| 生成索引文件 | 为本次新建的文件夹同时生成一个索引 md |
-| 索引文件名 | 与文件夹同名 / README.md |
-| 生成范围 | 每个文件夹 / 只在最底层 / 只在最顶层 |
-| 索引内容来源 | 索引文件单独的内容设置，与普通笔记互不影响 |
-| 日期顺序 | 年月日 / 月日年（美国）/ 日月年（欧洲） |
-| 日期分隔符 | `-` / `/` / `.` / 空格 / 年月日 |
-| 月份写法 | 数字（11）/ 英文缩写（Nov）/ 英文全称（November） |
-| 包含时间 | 关闭时 `{{datetime}}` 只显示日期；`{{time}}` 始终可用 |
-| 时间精度 | 到分（14:05）/ 到秒（14:05:33） |
-| 时间分隔符 | 冒号 `:` / 点号 `.` |
-| 显示侧边栏按钮 | 开/关左侧边栏的按钮 |
+会生成 `日记/2026/一月.md`、`日记/2026/二月.md`。
 
-## 日期与时间
+同名冲突、目标目录缺失、索引文件是否存在，最后都会汇总在一条通知里。
 
-- 年月日（ISO 8601，中国/日本/韩国等常用）：`2026-11-19`
+### 日期与时间
+
+- 年月日：`2026-11-19`
 - 月日年（美国）：`11/19/2026`
-- 日月年（欧洲/英国/法国等）：`19/11/2026`，德语区常写成 `19.11.2026`
-- 英文月份（缩写 Nov / 全称 November）：
-  - 空格 + 月日年：`Nov 19, 2026`、`November 19, 2026`（自动加逗号）
-  - 空格 + 日月年：`19 Nov 2026`、`19 November 2026`
-  - 空格 + 年月日：`2026 Nov 19`
-  - 斜杠：`Nov/19/2026`、`19/Nov/2026`、`2026/Nov/19`
-  - 年月日：`2026年Nov月19日`
-- 时间统一 24 小时制：`14:05` 或 `14:05:33`
+- 日月年（欧洲）：`19/11/2026` 或 `19.11.2026`
+- 英文月份：`Nov 19, 2026`、`19 Nov 2026`、`Nov/19/2026`
+- 时间 24 小时制：`14:05` 或 `14:05:33`
 
-设置页里有一行「当前格式示例」，改日期/时间选项时会实时更新。
+### 占位符
 
-## 占位符
+`{{title}}`、`{{folderName}}`、`{{parentName}}`、`{{folder}}`、`{{path}}`、`{{date}}`、`{{time}}`、`{{datetime}}`
 
-| 占位符 | 普通笔记 | 索引笔记 |
-| --- | --- | --- |
-| `{{title}}` | 文件名（不含 `.md`） | 索引文件名（`README` 或文件夹名） |
-| `{{folderName}}` | 所在文件夹名 | 索引文件名 |
-| `{{parentName}}` | 所在文件夹名 | 所属文件夹名 |
-| `{{folder}}` | 父路径 | 父路径 |
-| `{{path}}` | 完整路径 | 完整路径 |
-| `{{date}}` | 创建日期，按日期设置格式化 | 同左 |
-| `{{time}}` | 创建时间，按时间设置格式化 | 同左 |
-| `{{datetime}}` | 日期 + 时间（受「包含时间」控制） | 同左 |
+索引笔记里 `{{title}}` 和 `{{folderName}}` 是索引文件名（如 `README`），`{{parentName}}` 才是文件夹名。
 
-## 文件夹索引
+### 文件夹索引
 
-索引文件就是常说的 folder note：给文件夹配一个入口笔记，用来写概述、链接、标签或待办，也会出现在搜索、图谱和大纲里。
+给文件夹配一个入口笔记，用来写概述、链接、标签或待办。只给本次新建的文件夹生成，已有文件夹不补。
 
-- 「与文件夹同名」是常见约定（`项目A/项目A.md`）
-- `README.md` 更接近代码仓库的目录说明习惯
-- 只给本次新建的文件夹生成，不会往已有目录里撒文件
+### 行为说明
 
-## 行为说明
-
-- 创建前先做一次只读预检，所有对话框都在写入之前弹完；选「终止」时不会产生任何文件
+- 创建前先做只读预检，所有对话框都在写入之前弹完
 - 已存在的文件夹会被复用，不会重复创建
-- 同名文件按设置处理；覆盖会替换原内容且不可撤销
-- 同名文件和文件夹可以并存：`A.md` 和 `A/` 是两个对象，各自照建
-- 目录树输入框里按 **Tab** 插入缩进，**Shift+Tab** 取消缩进
-- 非法字符、Windows 保留名（CON、NUL 等）、`..` 路径会被拒绝或跳过，并在完成提示里汇总
+- 覆盖已有笔记不可撤销
+- 同名文件和文件夹可以并存（`A.md` 和 `A/`）
+- 输入框里 Tab 缩进，Shift+Tab 反缩进
+- 非法字符、Windows 保留名、`..` 路径会被跳过并汇总
 
-## 兼容性
+### 兼容性
 
 - 最低 Obsidian 1.5.0
-- 桌面端和移动端均可使用（不依赖 Node 的 `fs`）
+- 桌面端和移动端均可使用
 
-## 从旧版本升级
+### 许可证与鸣谢
 
-插件 id 从 `auto-gen-fft-plugin` 改为 `folder-forge`，目录名也要一起改。
-
-旧 `data.json` 里的绝对路径会被清空，需要重新选择目标目录；旧的 `folderNames` 列表会保留在「简单文件夹」的输入框里。
-
-## 许可证与鸣谢
-
-项目以 [MIT](LICENSE) 协议开源。
-
-最初版本基于 B 站 UP 主「拈花赛博行」的自动生成文件夹插件，本版本在其思路上重写并扩展。
-
-## 开发与测试
-
-`main.js` 是单文件插件，无需构建。逻辑测试在 `_ff_test`（开发用，不随插件发布）：
-
-```powershell
-Copy-Item .\main.js .\_ff_test\plugin.js -Force
-node .\_ff_test\run.js
-```
+[MIT](LICENSE) 协议开源。最初版本基于 B 站 UP 主「拈花赛博行」的自动生成文件夹插件，本版本在其思路上重写并扩展。
