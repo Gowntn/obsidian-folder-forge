@@ -1,0 +1,97 @@
+.folder-forge-structure-setting {
+  align-items: flex-start;
+}
+
+.folder-forge-structure-setting .setting-item-info {
+  flex: 1 1 34%;
+  min-width: 0;
+  padding-right: var(--size-4-2);
+}
+
+.folder-forge-structure-setting .setting-item-name,
+.folder-forge-structure-setting .setting-item-description {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.folder-forge-structure-setting .setting-item-control {
+  flex: 1 1 66%;
+  min-width: 0;
+  justify-content: stretch;
+}
+
+.folder-forge-structure-setting .folder-forge-textarea {
+  width: 100%;
+  max-width: none;
+}
+
+@media (max-width: 640px) {
+  .folder-forge-structure-setting {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .folder-forge-structure-setting .setting-item-info,
+  .folder-forge-structure-setting .setting-item-control {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+}
+
+.folder-forge-path-input {
+  width: 320px;
+  max-width: 100%;
+}
+
+.folder-forge-textarea {
+  width: 100%;
+  max-width: 520px;
+  height: 200px;
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.folder-forge-textarea-small {
+  width: 100%;
+  max-width: 520px;
+  height: 110px;
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.folder-forge-hint {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.folder-forge-conflict-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: var(--size-4-2) 0;
+  padding: var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background-color: var(--background-secondary);
+}
+
+.folder-forge-conflict-item {
+  padding: 2px 0;
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  word-break: break-all;
+}
+
+.folder-forge-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-4);
+}
+
+.folder-forge-modal-buttons button {
+  cursor: pointer;
+}
