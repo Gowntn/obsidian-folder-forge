@@ -130,6 +130,7 @@ An index note is the usual folder note: an entry point for the folder where you 
 - Existing folders are reused, never recreated
 - Overwriting an existing note cannot be undone
 - A note and a folder with the same name can coexist (`A.md` and `A/`)
+- File names are compared case-insensitively, so `README.md` conflicts with an existing `readme.md`
 - Tab inserts indentation, Shift+Tab outdents
 - Illegal characters, reserved Windows names and `..` paths are skipped and summarized
 
@@ -235,6 +236,7 @@ BRAT：添加 `Gowntn/obsidian-folder-forge` 后启用。
 - 已存在的文件夹会被复用，不会重复创建
 - 覆盖已有笔记不可撤销
 - 同名文件和文件夹可以并存（`A.md` 和 `A/`）
+- 文件名按不区分大小写比较，`README.md` 与已有的 `readme.md` 视为同名
 - 输入框里 Tab 缩进，Shift+Tab 反缩进
 - 非法字符、Windows 保留名、`..` 路径会被跳过并汇总
 

@@ -588,8 +588,9 @@ function findChildByName(node, name) {
 }
 
 function descriptionFragment(lines) {
+  const list = Array.isArray(lines) ? lines : [String(lines)];
   const fragment = document.createDocumentFragment();
-  lines.forEach((line, index) => {
+  list.forEach((line, index) => {
     if (index > 0) fragment.appendChild(document.createElement("br"));
     fragment.appendChild(document.createTextNode(line));
   });
@@ -1200,6 +1201,8 @@ class FolderForgePlugin extends Plugin {
 
       annotateTree(parsed.root, 0);
 
+      this._existingPaths = this.buildExistingIndex();
+
       // 1. 目标目录是否存在
       const missingBase = this.findMissingBase(base);
       if (missingBase === null) return;
@@ -1252,6 +1255,34 @@ class FolderForgePlugin extends Plugin {
 
   /* ---------------- 目标目录 ---------------- */
 
+  buildExistingIndex() {
+    const map = new Map();
+    const vault = this.app.vault;
+    let items = [];
+    try {
+      if (typeof vault.getAllLoadedFiles === "function") {
+        items = vault.getAllLoadedFiles() || [];
+      } else {
+        if (typeof vault.getFiles === "function") items = items.concat(vault.getFiles());
+        if (typeof vault.getAllFolders === "function") {
+          items = items.concat(vault.getAllFolders(true));
+        }
+      }
+    } catch (error) {
+      items = [];
+    }
+    for (const item of items) {
+      if (!item || typeof item.path !== "string") continue;
+      map.set(item.path.toLowerCase(), item);
+    }
+    return map;
+  }
+
+  lookupEntry(path) {
+    if (!this._existingPaths) return this.app.vault.getAbstractFileByPath(path);
+    return this._existingPaths.get(String(path).toLowerCase()) || null;
+  }
+
   findMissingBase(base) {
     if (!base) return [];
 
@@ -1261,7 +1292,7 @@ class FolderForgePlugin extends Plugin {
     for (const segment of base.split("/")) {
       if (!segment) continue;
       current = joinPath(current, segment);
-      const entry = this.app.vault.getAbstractFileByPath(current);
+      const entry = this.lookupEntry(current);
       if (!entry) {
         missing.push(current);
       } else if (!(entry instanceof TFolder)) {
@@ -1294,9 +1325,11 @@ class FolderForgePlugin extends Plugin {
       const path = joinPath(parentPath, node.name);
 
       if (node.kind === "folder") {
-        const entry = this.app.vault.getAbstractFileByPath(path);
+        const entry = this.lookupEntry(path);
+        let childBase = path;
         if (entry instanceof TFolder) {
-          plan.folders.push({ path, action: "reuse" });
+          childBase = entry.path;
+          plan.folders.push({ path: entry.path, action: "reuse" });
         } else if (entry) {
           plan.errors.push(t("errors.folderOccupied", path));
           continue;
@@ -1313,7 +1346,7 @@ class FolderForgePlugin extends Plugin {
             }
           }
         }
-        this.planFolder(node, path, plan);
+        this.planFolder(node, childBase, plan);
       } else {
         this.planFile(path, node, plan);
       }
@@ -1321,10 +1354,11 @@ class FolderForgePlugin extends Plugin {
   }
 
   planFile(path, node, plan) {
-    if (plan.seenPaths.has(path)) return;
-    plan.seenPaths.add(path);
+    const key = path.toLowerCase();
+    if (plan.seenPaths.has(key)) return;
+    plan.seenPaths.add(key);
 
-    const entry = this.app.vault.getAbstractFileByPath(path);
+    const entry = this.lookupEntry(path);
     if (!entry) {
       plan.files.push({ path, node, action: "create" });
       return;
@@ -1333,12 +1367,12 @@ class FolderForgePlugin extends Plugin {
       plan.errors.push(t("errors.fileOccupied", path));
       return;
     }
-    plan.files.push({ path, node, action: "conflict" });
+    plan.files.push({ path, node, entry, action: "conflict" });
   }
 
   indexFileName(node) {
     if (this.settings.folderIndexName === "readme") return "README.md";
-    return node.name + ".md";
+    return node.name.replace(/\.md$/i, "") + ".md";
   }
 
   /* ---------------- 模板 ---------------- */
@@ -1428,7 +1462,7 @@ class FolderForgePlugin extends Plugin {
         const content = this.renderContent(item.node, parentPath, item.path);
 
         if (item.action === "overwrite") {
-          const entry = this.app.vault.getAbstractFileByPath(item.path);
+          const entry = item.entry || this.app.vault.getAbstractFileByPath(item.path);
           await this.app.vault.process(entry, () => content);
           stats.overwrites += 1;
         } else {
