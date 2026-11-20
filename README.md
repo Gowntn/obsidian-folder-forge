@@ -101,10 +101,57 @@ Same-name conflicts, missing target folders and existing index notes are all rep
 | Index file name | Same as folder / README.md |
 | Scope | Every folder / bottom level only / top level only |
 | Index content source | Separate content settings for index notes |
+| Preset folder | Folder that stores preset notes (default `folder-forge`) |
+| Current preset | The preset file currently loaded |
 | Date order and separator | Year-month-day, month-day-year (US), day-month-year (EU) |
 | Month style | Numbers (11) / short name (Nov) / full name (November) |
 | Time | Include or not, minutes or seconds, separator |
 | Show ribbon button | Show or hide the sidebar button |
+
+## Structure presets
+
+A preset is a normal Markdown note. Its body is the folder tree; its frontmatter can carry the settings for that run.
+
+```markdown
+---
+folder-forge-preset: true
+basePath: Journal/2026
+mode: auto
+template: Templates/Journal.md
+index:
+  enabled: true
+  name: readme
+  scope: bottom
+---
+
+January
+  01
+  02
+```
+
+| Field | Meaning |
+| --- | --- |
+| `basePath` | Target folder for this run |
+| `mode` | `tree` / `auto` / `folder` / `file` |
+| `template` | Template used for the notes |
+| `indexTemplate` | Template used for index notes |
+| `index.enabled` / `index.name` / `index.scope` | Index note settings |
+| `templates` | Per-folder templates (see below) |
+
+Frontmatter only applies to that run; your global settings stay untouched.
+
+Use **Structure presets → Choose preset** to load a preset, **Save to preset** to write the text box back, and **Save as…** to create a new one. The command **Create from a preset** runs a preset directly from the command palette.
+
+### Per-folder templates
+
+```markdown
+templates:
+  "Journal": "Templates/Journal.md"
+  "Journal/2026": "Templates/Year.md"
+  "": "Templates/Default.md"
+```
+
+The plugin picks the longest matching folder prefix: `Journal/2026/01.md` uses `Templates/Year.md`, `Journal/other.md` uses `Templates/Journal.md`, and everything else uses the empty-key default.
 
 ## Date and time
 
@@ -211,6 +258,51 @@ BRAT：添加 `Gowntn/obsidian-folder-forge` 后启用。
 会生成 `日记/2026/一月.md`、`日记/2026/二月.md`。
 
 同名冲突、目标目录缺失、索引文件是否存在，最后都会汇总在一条通知里。
+
+### 结构预设
+
+预设就是一个普通的 Markdown 笔记：正文是目录树，frontmatter 可以带上这次生成要用的设置。
+
+```markdown
+---
+folder-forge-preset: true
+basePath: 日记/2026
+mode: auto
+template: 模板/日记.md
+index:
+  enabled: true
+  name: readme
+  scope: bottom
+---
+
+一月
+  01
+  02
+```
+
+| 字段 | 说明 |
+| --- | --- |
+| `basePath` | 本次生成的目标目录 |
+| `mode` | `tree` / `auto` / `folder` / `file` |
+| `template` | 普通笔记用的模板 |
+| `indexTemplate` | 索引笔记用的模板 |
+| `index.enabled` / `index.name` / `index.scope` | 索引文件设置 |
+| `templates` | 按文件夹指定模板（见下） |
+
+frontmatter 只对本次生成生效，不会改你的全局设置。
+
+设置页「结构预设」里：**选择预设** 读取、**保存到预设** 写回、**另存为…** 新建；命令面板里有「**从预设生成**」，选完直接跑。
+
+按文件夹套用模板：
+
+```markdown
+templates:
+  "日记": "模板/日记.md"
+  "日记/2026": "模板/年度.md"
+  "": "模板/默认.md"
+```
+
+按最长前缀匹配：`日记/2026/01.md` 用「年度」，`日记/其他.md` 用「日记」，其余用 `""` 的默认模板。
 
 ### 日期与时间
 

@@ -51,6 +51,9 @@ const DEFAULT_SETTINGS = {
   folderIndexEnabled: false,
   folderIndexName: "same",
   folderIndexScope: "all",
+  presetFolder: "folder-forge",
+  presetPath: "",
+  presetConfig: null,
 };
 
 const MODE_KEYS = {
@@ -71,7 +74,10 @@ let LANG = "zh";
 const I18N = {
   zh: {
     ribbon: "目录生成器：批量生成文件夹与笔记",
-    command: "批量生成文件夹与笔记",
+    command: {
+      main: "批量生成文件夹与笔记",
+      preset: "从预设生成",
+    },
     mode: {
       auto: {
         name: "自动识别",
@@ -137,6 +143,15 @@ const I18N = {
       templateModeNoFile: (label) => label + "模式已开启，但没有选择模板文件",
       templateMissing: (label) => "没有读取到" + label,
       templateError: (label, message) => "没有读取到" + label + "：" + message,
+      templatePathMissing: (path) => "没有读取到模板文件：" + path,
+      presetMissing: (path) => "找不到预设文件：" + path,
+      presetLoaded: (path) => "已读取预设：" + path,
+      presetSaved: (path) => "已保存预设：" + path,
+      presetCreated: (path) => "已创建预设：" + path,
+      presetBadName: (reason) => "预设名称无效：" + reason,
+      presetCleared: "已清除当前预设",
+      noPresets: (folder) => "预设文件夹里没有 md 文件：" + folder,
+      presetSaveFailed: (message) => "保存预设失败：" + message,
       runFailed: (message) => "生成失败：" + message,
     },
     report: {
@@ -163,10 +178,24 @@ const I18N = {
       folderPlaceholder: "选择目标文件夹（回车确认）",
       rootFolder: "/（仓库根目录）",
       templatePlaceholderPick: "选择模板文件",
+      presetPlaceholder: "选择预设文件",
+      presetNameTitle: "预设文件名",
+      presetNamePlaceholder: "例如：日记",
+      overwriteTitle: "文件已存在",
+      overwriteMessage: (path) => "「" + path + "」已存在，要覆盖吗？",
+      confirm: "确定",
     },
     labels: {
       template: "模板文件",
       indexTemplate: "索引文件模板",
+    },
+    preset: {
+      overrideBase: (path) => "目标目录 " + path,
+      overrideMode: (mode) => "模式 " + mode,
+      overrideTemplate: (path) => "模板 " + path,
+      overrideIndexTemplate: (path) => "索引模板 " + path,
+      overrideMap: (count) => "按文件夹模板 " + count + " 条",
+      separator: "；",
     },
     verify: {
       choose: (label) => "请先选择" + label,
@@ -263,6 +292,18 @@ const I18N = {
       runNow: "立即生成",
       runNowDesc: "按照上面的设置批量创建文件夹和笔记",
       runButton: "立即创建",
+      preset: "结构预设",
+      presetFolder: "预设文件夹",
+      presetFolderDesc: "存放预设 md 的文件夹，留空表示仓库根目录",
+      currentPreset: "当前预设",
+      presetNone: "未选择",
+      choosePreset: "选择预设…",
+      chooseOtherFile: "其他文件…",
+      reloadPreset: "读取",
+      savePreset: "保存到预设",
+      savePresetAs: "另存为…",
+      clearPreset: "清除",
+      presetHint: "预设可以携带目标目录、模式和模板，仅对本次生成生效",
     },
     placeholderLines: [
       "{{title}} = 文件名",
@@ -274,7 +315,10 @@ const I18N = {
   },
   en: {
     ribbon: "Folder Forge: create folders and notes",
-    command: "Create folders and notes",
+    command: {
+      main: "Create folders and notes",
+      preset: "Create from a preset",
+    },
     mode: {
       auto: {
         name: "Auto",
@@ -348,6 +392,15 @@ const I18N = {
       templateModeNoFile: (label) => label + " mode is on, but no template file is selected",
       templateMissing: (label) => "Could not read " + label,
       templateError: (label, message) => "Could not read " + label + ": " + message,
+      templatePathMissing: (path) => "Could not read template file: " + path,
+      presetMissing: (path) => "Preset file not found: " + path,
+      presetLoaded: (path) => "Preset loaded: " + path,
+      presetSaved: (path) => "Preset saved: " + path,
+      presetCreated: (path) => "Preset created: " + path,
+      presetBadName: (reason) => "Invalid preset name: " + reason,
+      presetCleared: "Current preset cleared",
+      noPresets: (folder) => "No markdown files in the preset folder: " + folder,
+      presetSaveFailed: (message) => "Failed to save preset: " + message,
       runFailed: (message) => "Failed: " + message,
     },
     report: {
@@ -374,10 +427,24 @@ const I18N = {
       folderPlaceholder: "Choose the target folder (Enter to confirm)",
       rootFolder: "/ (vault root)",
       templatePlaceholderPick: "Choose a template file",
+      presetPlaceholder: "Choose a preset file",
+      presetNameTitle: "Preset file name",
+      presetNamePlaceholder: "e.g. Journal",
+      overwriteTitle: "File already exists",
+      overwriteMessage: (path) => "「" + path + "」 already exists. Overwrite it?",
+      confirm: "Confirm",
     },
     labels: {
       template: "template file",
       indexTemplate: "index template",
+    },
+    preset: {
+      overrideBase: (path) => "target " + path,
+      overrideMode: (mode) => "mode " + mode,
+      overrideTemplate: (path) => "template " + path,
+      overrideIndexTemplate: (path) => "index template " + path,
+      overrideMap: (count) => count + " folder templates",
+      separator: ", ",
     },
     verify: {
       choose: (label) => "Select " + label + " first",
@@ -473,6 +540,18 @@ const I18N = {
       runNow: "Generate now",
       runNowDesc: "Create folders and notes using the settings above",
       runButton: "Create now",
+      preset: "Structure presets",
+      presetFolder: "Preset folder",
+      presetFolderDesc: "Folder that stores preset notes; empty = vault root",
+      currentPreset: "Current preset",
+      presetNone: "None",
+      choosePreset: "Choose preset…",
+      chooseOtherFile: "Other file…",
+      reloadPreset: "Load",
+      savePreset: "Save to preset",
+      savePresetAs: "Save as…",
+      clearPreset: "Clear",
+      presetHint: "A preset can carry the target folder, mode and templates for this run only",
     },
     placeholderLines: [
       "{{title}} = file name",
@@ -609,6 +688,182 @@ function getScrollParent(element) {
     node = node.parentElement;
   }
   return null;
+}
+
+/* ------------------------------------------------------------------ */
+/* 结构预设：frontmatter 解析与应用                                     */
+/* ------------------------------------------------------------------ */
+
+const PRESET_MARKER = "folder-forge-preset";
+
+function stripQuotes(value) {
+  const text = String(value == null ? "" : value).trim();
+  if (text.length >= 2) {
+    const first = text[0];
+    const last = text[text.length - 1];
+    if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+      return text.slice(1, -1);
+    }
+  }
+  return text;
+}
+
+function parseScalar(value) {
+  const text = stripQuotes(value);
+  if (/^true$/i.test(text)) return true;
+  if (/^false$/i.test(text)) return false;
+  return text;
+}
+
+function parseYamlBlock(block) {
+  const result = {};
+  let currentKey = null;
+
+  for (const raw of String(block || "").split("\n")) {
+    if (!raw.trim() || raw.trim().startsWith("#")) continue;
+    const indent = raw.match(/^ */)[0].length;
+    const line = raw.trim();
+
+    if (indent === 0) {
+      const match = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+      if (!match) continue;
+      const key = match[1];
+      const value = match[2].trim();
+      if (value === "") {
+        currentKey = key;
+        result[key] = {};
+      } else {
+        currentKey = null;
+        result[key] = parseScalar(value);
+      }
+      continue;
+    }
+
+    if (!currentKey) continue;
+
+    if (currentKey === "templates") {
+      const match = line.match(/^("([^"]*)"|'([^']*)'|([^:]+)):\s*(.*)$/);
+      if (!match) continue;
+      const folder = stripQuotes((match[2] ?? match[3] ?? match[4] ?? "").trim());
+      const template = stripQuotes(match[5].trim());
+      if (template) result.templates[folder] = template;
+      continue;
+    }
+
+    const match = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (!match) continue;
+    result[currentKey][match[1]] = parseScalar(match[2].trim());
+  }
+
+  return result;
+}
+
+function parseFrontmatter(text) {
+  const source = String(text == null ? "" : text)
+    .replace(/\r\n?/g, "\n")
+    .replace(/^\uFEFF/, "");
+  if (!source.startsWith("---\n")) {
+    return { config: {}, body: source, header: null };
+  }
+  const end = source.indexOf("\n---", 4);
+  if (end === -1) {
+    return { config: {}, body: source, header: null };
+  }
+
+  const header = source.slice(4, end);
+  let body = source.slice(end + 4);
+  if (body.startsWith("\n")) body = body.slice(1);
+
+  return { config: parseYamlBlock(header), body, header };
+}
+
+function normalizePresetConfig(raw) {
+  const source = raw && typeof raw === "object" ? raw : {};
+  const config = {};
+
+  if (typeof source.basePath === "string") config.basePath = source.basePath;
+  if (typeof source.mode === "string" && MODE_KEYS[source.mode]) config.mode = source.mode;
+  if (typeof source.template === "string" && source.template.trim()) {
+    config.template = source.template.trim();
+  }
+  if (typeof source.indexTemplate === "string" && source.indexTemplate.trim()) {
+    config.indexTemplate = source.indexTemplate.trim();
+  }
+
+  if (source.index && typeof source.index === "object") {
+    const index = {};
+    if (source.index.enabled !== undefined) index.enabled = source.index.enabled === true;
+    if (source.index.name === "same" || source.index.name === "readme") {
+      index.name = source.index.name;
+    }
+    if (["all", "bottom", "top"].includes(source.index.scope)) {
+      index.scope = source.index.scope;
+    }
+    if (Object.keys(index).length) config.index = index;
+  }
+
+  if (source.templates && typeof source.templates === "object") {
+    const templates = {};
+    for (const [folder, template] of Object.entries(source.templates)) {
+      if (typeof template === "string" && template.trim()) {
+        templates[String(folder)] = template.trim();
+      }
+    }
+    if (Object.keys(templates).length) config.templates = templates;
+  }
+
+  return config;
+}
+
+function buildRunSettings(base, preset) {
+  const settings = Object.assign({}, base);
+  settings.templatesMap = {};
+
+  if (!preset || typeof preset !== "object") return settings;
+
+  if (preset.basePath !== undefined) settings.basePath = preset.basePath;
+  if (preset.mode) settings.createType = preset.mode;
+  if (preset.template) {
+    settings.contentMode = "template";
+    settings.templatePath = preset.template;
+  }
+  if (preset.indexTemplate) {
+    settings.indexContentMode = "template";
+    settings.indexTemplatePath = preset.indexTemplate;
+  }
+  if (preset.index) {
+    if (preset.index.enabled !== undefined) settings.folderIndexEnabled = preset.index.enabled;
+    if (preset.index.name) settings.folderIndexName = preset.index.name;
+    if (preset.index.scope) settings.folderIndexScope = preset.index.scope;
+  }
+  if (preset.templates) settings.templatesMap = preset.templates;
+
+  return settings;
+}
+
+function matchTemplate(templates, folderPath) {
+  if (!templates) return null;
+  const target = String(folderPath || "");
+  let bestKey = null;
+
+  for (const key of Object.keys(templates)) {
+    const folder = key.replace(/\/+$/, "");
+    const matches =
+      folder === "" ||
+      target === folder ||
+      (folder !== "" && target.startsWith(folder + "/"));
+    if (!matches) continue;
+    if (bestKey === null || folder.length > bestKey.replace(/\/+$/, "").length) {
+      bestKey = key;
+    }
+  }
+
+  return bestKey === null ? null : templates[bestKey];
+}
+
+function buildPresetText(header, body) {
+  const frontmatter = header && header.trim() ? header.trim() : PRESET_MARKER + ": true";
+  return "---\n" + frontmatter + "\n---\n\n" + String(body || "");
 }
 
 function handleTabKey(inputEl, event) {
@@ -1097,6 +1352,123 @@ class TemplateSuggestModal extends FuzzySuggestModal {
   }
 }
 
+class PresetSuggestModal extends FuzzySuggestModal {
+  constructor(app, files, onChoose) {
+    super(app);
+    this.files = files || [];
+    this.onChoose = onChoose;
+    this.setPlaceholder(t("dialog.presetPlaceholder"));
+  }
+
+  getItems() {
+    return this.files;
+  }
+
+  getItemText(item) {
+    return item.path;
+  }
+
+  onChooseItem(item) {
+    this.onChoose(item);
+  }
+}
+
+class PromptModal extends Modal {
+  constructor(app, title, placeholder, initialValue, resolve) {
+    super(app);
+    this.title = title;
+    this.placeholder = placeholder || "";
+    this.initialValue = initialValue || "";
+    this.resolve = resolve;
+    this.done = false;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h2", { text: this.title });
+
+    const input = contentEl.createEl("input", {
+      type: "text",
+      cls: "folder-forge-prompt-input",
+    });
+    input.value = this.initialValue;
+    input.placeholder = this.placeholder;
+
+    const row = contentEl.createDiv({ cls: "folder-forge-modal-buttons" });
+    const cancel = row.createEl("button", { text: t("dialog.cancel") });
+    cancel.addEventListener("click", () => this.finish(null));
+
+    const confirm = row.createEl("button", { text: t("dialog.confirm") });
+    confirm.addClass("mod-cta");
+    confirm.addEventListener("click", () => this.finish(input.value));
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        this.finish(input.value);
+      }
+    });
+
+    if (typeof window !== "undefined" && typeof window.setTimeout === "function") {
+      window.setTimeout(() => input.focus(), 0);
+    }
+  }
+
+  finish(value) {
+    if (this.done) return;
+    this.done = true;
+    this.resolve(value);
+    this.close();
+  }
+
+  onClose() {
+    this.contentEl.empty();
+    if (!this.done) {
+      this.done = true;
+      this.resolve(null);
+    }
+  }
+}
+
+class ConfirmModal extends Modal {
+  constructor(app, title, message, resolve) {
+    super(app);
+    this.title = title;
+    this.message = message;
+    this.resolve = resolve;
+    this.done = false;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h2", { text: this.title });
+    contentEl.createEl("p", { text: this.message });
+
+    const row = contentEl.createDiv({ cls: "folder-forge-modal-buttons" });
+    const cancel = row.createEl("button", { text: t("dialog.cancel") });
+    cancel.addEventListener("click", () => this.finish(false));
+
+    const confirm = row.createEl("button", { text: t("dialog.confirm") });
+    confirm.addClass("mod-warning");
+    confirm.addEventListener("click", () => this.finish(true));
+  }
+
+  finish(value) {
+    if (this.done) return;
+    this.done = true;
+    this.resolve(value);
+    this.close();
+  }
+
+  onClose() {
+    this.contentEl.empty();
+    if (!this.done) {
+      this.done = true;
+      this.resolve(false);
+    }
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* 插件主体                                                             */
 /* ------------------------------------------------------------------ */
@@ -1109,8 +1481,14 @@ class FolderForgePlugin extends Plugin {
 
     this.addCommand({
       id: "run",
-      name: t("command"),
+      name: t("command.main"),
       callback: () => this.runCreate(),
+    });
+
+    this.addCommand({
+      id: "run-preset",
+      name: t("command.preset"),
+      callback: () => this.runFromPreset(),
     });
 
     this.addSettingTab(new FolderForgeSettingTab(this.app, this));
@@ -1122,9 +1500,15 @@ class FolderForgePlugin extends Plugin {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
     this.settings.basePath = this.migrateBasePath(loaded.basePath);
     if (isLegacyData) this.settings.createType = "auto";
+    if (!this.settings.presetConfig || typeof this.settings.presetConfig !== "object") {
+      this.settings.presetConfig = null;
+    }
+    this.settings.presetPath = normalizeVaultPath(this.settings.presetPath || "");
     this._running = false;
     this._template = null;
     this._indexTemplate = null;
+    this._templateCache = null;
+    this._runSettings = null;
   }
 
   applyRibbon() {
@@ -1144,6 +1528,200 @@ class FolderForgePlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  /* ---------------- 结构预设 ---------------- */
+
+  currentText() {
+    return this.settings[MODE_KEYS[this.settings.createType]] || "";
+  }
+
+  listPresetFiles() {
+    const folderPath = normalizeVaultPath(this.settings.presetFolder);
+    let folder = null;
+
+    if (!folderPath) {
+      folder = this.app.vault.getRoot();
+    } else {
+      const entry = this.app.vault.getAbstractFileByPath(folderPath);
+      if (entry instanceof TFolder) folder = entry;
+    }
+
+    if (!folder) return [];
+
+    return folder.children
+      .filter((child) => child instanceof TFile && child.extension === "md")
+      .sort((a, b) => a.path.localeCompare(b.path));
+  }
+
+  async ensureFolder(folderPath) {
+    const target = normalizeVaultPath(folderPath);
+    if (!target) return;
+
+    let current = "";
+    for (const segment of target.split("/")) {
+      if (!segment) continue;
+      current = joinPath(current, segment);
+      const entry = this.app.vault.getAbstractFileByPath(current);
+      if (!entry) {
+        await this.app.vault.createFolder(current);
+      } else if (!(entry instanceof TFolder)) {
+        throw new Error(current);
+      }
+    }
+  }
+
+  async loadPreset(pathValue) {
+    const path = normalizeVaultPath(pathValue);
+    const entry = this.app.vault.getAbstractFileByPath(path);
+    if (!(entry instanceof TFile)) {
+      new Notice(t("notice.presetMissing", path));
+      return false;
+    }
+
+    let text;
+    try {
+      text = await this.app.vault.cachedRead(entry);
+    } catch (error) {
+      new Notice(t("notice.presetMissing", path));
+      return false;
+    }
+
+    const parsed = parseFrontmatter(text);
+    const preset = normalizePresetConfig(parsed.config);
+    const mode = preset.mode || this.settings.createType;
+
+    this.settings.createType = mode;
+    this.settings[MODE_KEYS[mode]] = parsed.body.replace(/\s+$/, "");
+    this.settings.presetPath = entry.path;
+    this.settings.presetConfig = preset;
+    await this.saveSettings();
+
+    new Notice(t("notice.presetLoaded", entry.path));
+    return true;
+  }
+
+  async savePreset() {
+    const path = normalizeVaultPath(this.settings.presetPath);
+    if (!path) {
+      await this.savePresetAs();
+      return;
+    }
+
+    const entry = this.app.vault.getAbstractFileByPath(path);
+    if (!(entry instanceof TFile)) {
+      new Notice(t("notice.presetMissing", path));
+      return;
+    }
+
+    let existing = "";
+    try {
+      existing = await this.app.vault.cachedRead(entry);
+    } catch (error) {
+      existing = "";
+    }
+    const parsed = parseFrontmatter(existing);
+    const header = parsed.header != null ? parsed.header : PRESET_MARKER + ": true";
+    const text = buildPresetText(header, this.currentText());
+
+    try {
+      await this.app.vault.process(entry, () => text);
+      new Notice(t("notice.presetSaved", path));
+    } catch (error) {
+      new Notice(t("notice.presetSaveFailed", error && error.message ? error.message : String(error)));
+    }
+  }
+
+  async savePresetAs() {
+    const name = await new Promise((resolve) => {
+      new PromptModal(
+        this.app,
+        t("dialog.presetNameTitle"),
+        t("dialog.presetNamePlaceholder"),
+        "",
+        resolve
+      ).open();
+    });
+    if (name === null) return;
+
+    const cleaned = sanitizeName(String(name || "").replace(/\.md$/i, ""));
+    if (!cleaned.ok) {
+      new Notice(t("notice.presetBadName", t("reason." + cleaned.reason)));
+      return;
+    }
+
+    const folderPath = normalizeVaultPath(this.settings.presetFolder);
+    const target = joinPath(folderPath, cleaned.name + ".md");
+    const existing = this.app.vault.getAbstractFileByPath(target);
+
+    if (existing instanceof TFile) {
+      const confirmed = await new Promise((resolve) => {
+        new ConfirmModal(
+          this.app,
+          t("dialog.overwriteTitle"),
+          t("dialog.overwriteMessage", target),
+          resolve
+        ).open();
+      });
+      if (!confirmed) return;
+
+      const parsed = parseFrontmatter(await this.app.vault.cachedRead(existing));
+      const header = parsed.header != null ? parsed.header : PRESET_MARKER + ": true";
+      await this.app.vault.process(existing, () => buildPresetText(header, this.currentText()));
+    } else {
+      try {
+        await this.ensureFolder(folderPath);
+        const text = buildPresetText(PRESET_MARKER + ": true", this.currentText());
+        await this.app.vault.create(target, text);
+      } catch (error) {
+        new Notice(
+          t("notice.presetSaveFailed", error && error.message ? error.message : String(error))
+        );
+        return;
+      }
+    }
+
+    this.settings.presetPath = target;
+    await this.saveSettings();
+    new Notice(t("notice.presetCreated", target));
+  }
+
+  async clearPreset() {
+    this.settings.presetPath = "";
+    this.settings.presetConfig = null;
+    await this.saveSettings();
+    new Notice(t("notice.presetCleared"));
+  }
+
+  describePreset(config) {
+    if (!config) return "";
+    const parts = [];
+
+    if (config.basePath !== undefined) {
+      parts.push(t("preset.overrideBase", config.basePath || "/"));
+    }
+    if (config.mode) parts.push(t("preset.overrideMode", modeName(config.mode)));
+    if (config.template) parts.push(t("preset.overrideTemplate", config.template));
+    if (config.indexTemplate) {
+      parts.push(t("preset.overrideIndexTemplate", config.indexTemplate));
+    }
+    if (config.templates) {
+      parts.push(t("preset.overrideMap", Object.keys(config.templates).length));
+    }
+
+    return parts.join(t("preset.separator"));
+  }
+
+  async runFromPreset() {
+    const files = this.listPresetFiles();
+    if (!files.length) {
+      new Notice(t("notice.noPresets", normalizeVaultPath(this.settings.presetFolder) || "/"));
+      return;
+    }
+    new PresetSuggestModal(this.app, files, async (file) => {
+      const ok = await this.loadPreset(file.path);
+      if (ok) await this.runCreate();
+    }).open();
   }
 
   migrateBasePath(raw) {
@@ -1166,7 +1744,8 @@ class FolderForgePlugin extends Plugin {
     this._running = true;
 
     try {
-      const settings = this.settings;
+      this._runSettings = buildRunSettings(this.settings, this.settings.presetConfig);
+      const settings = this._runSettings;
       const mode = settings.createType;
       const text = String(settings[MODE_KEYS[mode]] || "").trim();
 
@@ -1237,11 +1816,11 @@ class FolderForgePlugin extends Plugin {
       }
 
       // 4. 模板预读
-      const templatesReady = await this.prepareTemplates();
+      const templatesReady = await this.prepareTemplates(settings);
       if (!templatesReady) return;
 
       // 5. 执行
-      const stats = await this.executePlan(plan, missingBase);
+      const stats = await this.executePlan(plan, missingBase, settings);
 
       // 6. 汇总
       this.report(parsed.warnings, plan.errors, stats);
@@ -1250,6 +1829,8 @@ class FolderForgePlugin extends Plugin {
       new Notice(t("notice.runFailed", error && error.message ? error.message : String(error)), 8000);
     } finally {
       this._running = false;
+      this._runSettings = null;
+      this._templateCache = null;
     }
   }
 
@@ -1319,6 +1900,8 @@ class FolderForgePlugin extends Plugin {
   /* ---------------- 预检 ---------------- */
 
   planFolder(parent, parentPath, plan) {
+    const settings = this._runSettings || this.settings;
+
     for (const node of parent.children.values()) {
       if (node.skip) continue;
 
@@ -1335,8 +1918,8 @@ class FolderForgePlugin extends Plugin {
           continue;
         } else {
           plan.folders.push({ path, action: "create" });
-          if (indexScopeMatches(node, this.settings)) {
-            const indexName = this.indexFileName(node);
+          if (indexScopeMatches(node, settings)) {
+            const indexName = this.indexFileName(node, settings);
             if (!findChildByName(node, indexName)) {
               this.planFile(
                 joinPath(path, indexName),
@@ -1370,33 +1953,50 @@ class FolderForgePlugin extends Plugin {
     plan.files.push({ path, node, entry, action: "conflict" });
   }
 
-  indexFileName(node) {
-    if (this.settings.folderIndexName === "readme") return "README.md";
+  indexFileName(node, settings) {
+    const config = settings || this.settings;
+    if (config.folderIndexName === "readme") return "README.md";
     return node.name.replace(/\.md$/i, "") + ".md";
   }
 
   /* ---------------- 模板 ---------------- */
 
-  async prepareTemplates() {
+  async prepareTemplates(settings) {
+    const config = settings || this.settings;
     this._template = null;
     this._indexTemplate = null;
+    this._templateCache = new Map();
 
-    if (this.settings.contentMode === "template") {
-      const ok = await this.loadTemplate(
-        this.settings.templatePath,
-        "_template",
-        t("labels.template")
-      );
+    if (config.contentMode === "template") {
+      const ok = await this.loadTemplate(config.templatePath, "_template", t("labels.template"));
       if (!ok) return false;
     }
-    if (this.settings.folderIndexEnabled && this.settings.indexContentMode === "template") {
+    if (config.folderIndexEnabled && config.indexContentMode === "template") {
       const ok = await this.loadTemplate(
-        this.settings.indexTemplatePath,
+        config.indexTemplatePath,
         "_indexTemplate",
         t("labels.indexTemplate")
       );
       if (!ok) return false;
     }
+
+    const templates = config.templatesMap || {};
+    for (const templatePath of new Set(Object.values(templates))) {
+      const path = normalizeVaultPath(templatePath || "");
+      if (!path) continue;
+      const entry = this.app.vault.getAbstractFileByPath(path);
+      if (!(entry instanceof TFile)) {
+        new Notice(t("notice.templatePathMissing", path));
+        return false;
+      }
+      try {
+        this._templateCache.set(path.toLowerCase(), await this.app.vault.cachedRead(entry));
+      } catch (error) {
+        new Notice(t("notice.templatePathMissing", path));
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -1424,7 +2024,7 @@ class FolderForgePlugin extends Plugin {
 
   /* ---------------- 执行 ---------------- */
 
-  async executePlan(plan, missingBase) {
+  async executePlan(plan, missingBase, settings) {
     const stats = { folders: 0, reused: 0, files: 0, overwrites: 0, skipped: 0, failed: 0 };
 
     for (const path of missingBase) {
@@ -1459,7 +2059,7 @@ class FolderForgePlugin extends Plugin {
       }
       try {
         const parentPath = parentOf(item.path);
-        const content = this.renderContent(item.node, parentPath, item.path);
+        const content = this.renderContent(item.node, parentPath, item.path, settings);
 
         if (item.action === "overwrite") {
           const entry = item.entry || this.app.vault.getAbstractFileByPath(item.path);
@@ -1478,28 +2078,41 @@ class FolderForgePlugin extends Plugin {
     return stats;
   }
 
-  renderContent(node, parentPath, fullPath) {
-    const settings = this.settings;
-    const mode = node.isIndex ? settings.indexContentMode : settings.contentMode;
-    if (mode === "blank") return "";
+  renderContent(node, parentPath, fullPath, settings) {
+    const config = settings || this.settings;
+    let text = "";
 
-    let text;
-    if (mode === "text") {
-      text = node.isIndex ? settings.indexContentText : settings.contentText;
+    if (node.isIndex) {
+      if (config.indexContentMode === "blank") return "";
+      text =
+        config.indexContentMode === "text"
+          ? config.indexContentText
+          : this._indexTemplate || "";
     } else {
-      text = (node.isIndex ? this._indexTemplate : this._template) || "";
+      const mappedTemplate = matchTemplate(config.templatesMap, parentPath);
+      if (mappedTemplate) {
+        const key = normalizeVaultPath(mappedTemplate).toLowerCase();
+        text = (this._templateCache && this._templateCache.get(key)) || "";
+      } else if (config.contentMode === "blank") {
+        return "";
+      } else if (config.contentMode === "text") {
+        text = config.contentText;
+      } else {
+        text = this._template || "";
+      }
     }
+
     const replace = node.isIndex
-      ? settings.indexReplacePlaceholders
-      : settings.replacePlaceholders;
+      ? config.indexReplacePlaceholders
+      : config.replacePlaceholders;
     if (!replace) return text;
 
     const now = new Date();
     const title = node.name.replace(/\.md$/i, "");
     const actualFolderName = parentPath ? parentPath.split("/").pop() : "";
     const folderName = actualFolderName;
-    const dateValue = formatDateValue(now, settings);
-    const timeValue = formatTimeValue(now, settings);
+    const dateValue = formatDateValue(now, config);
+    const timeValue = formatTimeValue(now, config);
     const values = {
       title,
       folderName,
@@ -1508,7 +2121,7 @@ class FolderForgePlugin extends Plugin {
       path: fullPath,
       date: dateValue,
       time: timeValue,
-      datetime: settings.includeTime ? dateValue + " " + timeValue : dateValue,
+      datetime: config.includeTime ? dateValue + " " + timeValue : dateValue,
     };
 
     for (const key of Object.keys(values)) {
@@ -1589,6 +2202,83 @@ class FolderForgeSettingTab extends PluginSettingTab {
           }).open();
         });
       });
+
+    /* 结构预设 */
+    new Setting(containerEl).setName(t("settings.preset")).setHeading();
+
+    new Setting(containerEl)
+      .setName(t("settings.presetFolder"))
+      .setDesc(t("settings.presetFolderDesc"))
+      .addText((text) => {
+        text
+          .setPlaceholder("folder-forge")
+          .setValue(settings.presetFolder)
+          .onChange(async (value) => {
+            settings.presetFolder = value;
+            await this.plugin.saveSettings();
+          });
+        text.inputEl.addClass("folder-forge-path-input");
+      })
+      .addButton((button) => {
+        button.setButtonText(t("settings.chooseFolder")).onClick(() => {
+          new FolderSuggestModal(this.app, async (path) => {
+            settings.presetFolder = path;
+            await this.plugin.saveSettings();
+            this.display();
+          }).open();
+        });
+      });
+
+    const presetDescription = settings.presetPath
+      ? settings.presetPath +
+        (this.plugin.describePreset(settings.presetConfig)
+          ? " — " + this.plugin.describePreset(settings.presetConfig)
+          : "")
+      : t("settings.presetNone");
+
+    new Setting(containerEl)
+      .setName(t("settings.currentPreset"))
+      .setDesc(presetDescription || t("settings.presetNone"))
+      .addButton((button) => {
+        button.setButtonText(t("settings.choosePreset")).onClick(() => {
+          new PresetSuggestModal(this.app, this.plugin.listPresetFiles(), async (file) => {
+            await this.plugin.loadPreset(file.path);
+            this.display();
+          }).open();
+        });
+      })
+      .addButton((button) => {
+        button.setButtonText(t("settings.chooseOtherFile")).onClick(() => {
+          new TemplateSuggestModal(this.app, async (path) => {
+            await this.plugin.loadPreset(path);
+            this.display();
+          }).open();
+        });
+      })
+      .addButton((button) => {
+        button.setButtonText(t("settings.reloadPreset")).onClick(async () => {
+          if (!settings.presetPath) return;
+          await this.plugin.loadPreset(settings.presetPath);
+          this.display();
+        });
+      })
+      .addButton((button) => {
+        button.setButtonText(t("settings.savePreset")).onClick(() => this.plugin.savePreset());
+      })
+      .addButton((button) => {
+        button.setButtonText(t("settings.savePresetAs")).onClick(async () => {
+          await this.plugin.savePresetAs();
+          this.display();
+        });
+      })
+      .addButton((button) => {
+        button.setButtonText(t("settings.clearPreset")).onClick(async () => {
+          await this.plugin.clearPreset();
+          this.display();
+        });
+      });
+
+    new Setting(containerEl).setDesc(t("settings.presetHint"));
 
     /* 创建内容 */
     new Setting(containerEl).setName(t("settings.create")).setHeading();
@@ -2045,6 +2735,10 @@ module.exports.__internals = {
   descriptionFragment,
   formatDateValue,
   formatTimeValue,
+  parseFrontmatter,
+  normalizePresetConfig,
+  buildRunSettings,
+  matchTemplate,
   setLanguage,
   detectLanguage,
   t,

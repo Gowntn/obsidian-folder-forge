@@ -1,7 +1,7 @@
 ﻿{
 	"id": "folder-forge",
 	"name": "Folder Forge",
-	"version": "2.8.6",
+	"version": "2.9.0",
 	"minAppVersion": "1.5.0",
 	"description": "从缩进文本或名称列表批量生成文件夹与 Markdown 笔记。Create folder trees and Markdown notes from indented outlines or name lists.",
 	"author": "Gowntn",
