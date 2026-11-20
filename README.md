@@ -10,8 +10,9 @@ Create folder trees and Markdown notes from an indented outline or a name list. 
 - Vault-relative target path with a folder picker
 - Existing note handling: ask / skip / overwrite / abort
 - Folder index notes (folder notes): same name as the folder or `README.md`
-- Separate content for new notes and index notes: empty / custom text / template file
+- Separate content for new notes and index notes: empty / custom text / template file / multiple templates
 - Per-folder templates with a visual editor
+- Structure presets stored as normal Markdown notes
 - Placeholders for file names, folders, paths and date/time
 - Chinese and English UI, following Obsidian's language
 - Works on desktop and mobile
@@ -104,7 +105,6 @@ Same-name conflicts, missing target folders and existing index notes are all rep
 | Scope | Every folder / bottom level only / top level only |
 | Index content source | Separate content settings for index notes |
 | Preset location | Parent folder; presets live in a `folder-forge` subfolder (empty = vault root) |
-| Preset folder | Read-only path of the current preset folder |
 | Preset | Dropdown to switch presets, or choose "Don't use a preset" |
 | Date order and separator | Year-month-day, month-day-year (US), day-month-year (EU) |
 | Month style | Numbers (11) / short name (Nov) / full name (November) |
@@ -113,7 +113,7 @@ Same-name conflicts, missing target folders and existing index notes are all rep
 
 ## Structure presets
 
-A preset is a normal Markdown note. Its body is the folder tree; its frontmatter can carry the settings for that run.
+A preset is a normal Markdown note. Its body is the folder tree; its frontmatter stores the settings. Keep the body as a plain tree and do not start it with a `#` heading.
 
 Presets live in a `folder-forge` folder. By default that is `/folder-forge` at the vault root; set **Preset location** to any folder and the plugin uses `<that folder>/folder-forge` instead. The folder is created on the first save.
 
@@ -154,7 +154,7 @@ January
 | --- | --- |
 | `basePath` | Target folder |
 | `mode` | `tree` / `auto` / `folder` / `file` |
-| `contentMode` | New note content: `blank` / `text` / `template` |
+| `contentMode` | New note content: `blank` / `text` / `template` / `multi` |
 | `contentText` | Text content (block scalar supported) |
 | `replacePlaceholders` | Placeholder replacement for notes |
 | `indexEnabled` | Create folder index notes |
@@ -169,9 +169,9 @@ January
 
 Older presets may still contain a `template` field; it is read as the default template and saved back as `templates[""]`.
 
-Loading a preset applies these settings to the settings tab; **Save** writes the current settings back into the frontmatter. When a preset is active, the settings tab shows a toggle button to switch between the preset settings and the settings you had before loading it.
+`contentMode: multi` uses only the per-folder templates; a folder without a matching rule gets an empty note.
 
-Use the **Preset** dropdown to switch presets, **Read external preset** to load any note, **Save** to write the text box back, and **Save as preset** to create a new one. The command **Create from a preset** runs a preset directly from the command palette.
+Loading a preset applies these settings to the settings tab; **Save** writes the current settings back into the frontmatter. When a preset is active, the settings tab shows a toggle button to switch between the preset settings and the settings you had before loading it. The command **Create from a preset** runs a preset directly from the command palette.
 
 ### Per-folder templates
 
@@ -241,6 +241,7 @@ The first version was based on the "auto generate folders" plugin by the Bilibil
 - 文件夹索引（folder note）：与文件夹同名或 `README.md`
 - 新建笔记和索引笔记的初始内容分开设置：空白 / 自定义文本 / 模板文件 / 多个模板
 - 按文件夹指定模板，可在设置页里可视化编辑
+- 结构预设，用普通 Markdown 笔记保存目录树和设置
 - 占位符：文件名、文件夹名、路径、日期时间
 - 界面中英文，跟随 Obsidian 语言
 - 桌面端和移动端都能用
@@ -295,7 +296,7 @@ BRAT：添加 `Gowntn/obsidian-folder-forge` 后启用。
 
 ### 结构预设
 
-预设就是一个普通的 Markdown 笔记：正文是目录树，frontmatter 可以带上这次生成要用的设置。
+预设就是一个普通的 Markdown 笔记：正文是目录树，frontmatter 保存设置。正文请直接写目录树，不要以 `# 标题` 开头。
 
 预设放在 `folder-forge` 文件夹里。默认是仓库根目录的 `/folder-forge`；在「预设位置」里选一个父目录，就会改用「父目录/folder-forge」。文件夹在首次保存时自动创建。
 
@@ -336,7 +337,7 @@ timeSeparator: ":"
 | --- | --- |
 | `basePath` | 目标目录 |
 | `mode` | `tree` / `auto` / `folder` / `file` |
-| `contentMode` | 新笔记内容来源：`blank` / `text` / `template` |
+| `contentMode` | 新笔记内容来源：`blank` / `text` / `template` / `multi` |
 | `contentText` | 自定义文本，支持多行块 |
 | `replacePlaceholders` | 普通笔记是否替换占位符 |
 | `indexEnabled` | 是否生成文件夹索引 |
@@ -351,6 +352,8 @@ timeSeparator: ":"
 
 旧预设里可能还有 `template` 字段，读取时会当作默认模板，保存时合并进 `templates[""]`。
 
+`contentMode: multi` 只使用按文件夹模板，没有匹配到规则的文件夹生成空白笔记。
+
 读取预设会把 frontmatter 里的设置套用到设置页；点「保存」会把当前设置写回 frontmatter。预设生效时，设置页里有一个切换按钮，可以在预设设置和读取前的设置之间来回对比。
 
 设置页「结构预设」里：**预设** 下拉直接切换、**读取外部预设** 加载全库任意笔记、**保存** 写回当前预设、**另存为预设** 新建；命令面板里有「**从预设生成**」，选完直接跑。
@@ -364,7 +367,7 @@ templates:
   "": "模板/默认.md"
 ```
 
-按最长前缀匹配：`日记/2026/01.md` 用「年度」，`日记/其他.md` 用「日记」，其余用 `""` 的默认模板。
+匹配顺序：完整路径优先，其次是文件夹名，最后是 `""` 默认模板。`日记/2026/01.md` 用「年度」，`日记/其他.md` 用「日记」，其余用 `""` 的默认模板；只写「属性」也能匹配到「输入/属性」。
 
 ### 日期与时间
 
