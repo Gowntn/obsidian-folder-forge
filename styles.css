@@ -100,3 +100,58 @@
   width: 100%;
   margin-bottom: var(--size-4-2);
 }
+
+.folder-forge-wrap-setting {
+  flex-wrap: wrap;
+}
+
+.folder-forge-wrap-setting .folder-forge-full-width {
+  flex: 0 0 100%;
+  width: 100%;
+}
+
+.folder-forge-full-width {
+  width: 100%;
+}
+
+.folder-forge-full-width .folder-forge-hint {
+  margin: 0 0 var(--size-4-2);
+}
+
+.folder-forge-divider {
+  width: 100%;
+  margin: var(--size-4-2) 0;
+  border: none;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.folder-forge-preset-buttons {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--size-4-2);
+  margin: var(--size-4-2) 0;
+}
+
+.folder-forge-preset-buttons button {
+  cursor: pointer;
+}
+
+.folder-forge-rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  margin: var(--size-4-2) 0;
+}
+
+.folder-forge-rule-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.folder-forge-rule-input {
+  flex: 1 1 160px;
+  min-width: 120px;
+}

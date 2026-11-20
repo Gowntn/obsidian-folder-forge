@@ -11,6 +11,7 @@ Create folder trees and Markdown notes from an indented outline or a name list. 
 - Existing note handling: ask / skip / overwrite / abort
 - Folder index notes (folder notes): same name as the folder or `README.md`
 - Separate content for new notes and index notes: empty / custom text / template file
+- Per-folder templates with a visual editor
 - Placeholders for file names, folders, paths and date/time
 - Chinese and English UI, following Obsidian's language
 - Works on desktop and mobile
@@ -93,16 +94,18 @@ Same-name conflicts, missing target folders and existing index notes are all rep
 | --- | --- |
 | Target folder | Vault-relative path; empty = vault root |
 | Create mode | Auto / Tree / Folders / Notes |
-| Content source | Empty / custom text / template file |
+| Content source | Empty / custom text / template file / multiple templates |
 | Replace placeholders | Placeholder replacement for new notes |
+| Templates by folder | Edit per-folder template rules in a dialog |
 | When a note already exists | Ask / Skip / Overwrite / Abort |
 | When the target folder is missing | Ask / Create / Abort |
 | Create index notes | Add an index note for every new folder |
 | Index file name | Same as folder / README.md |
 | Scope | Every folder / bottom level only / top level only |
 | Index content source | Separate content settings for index notes |
-| Preset folder | Folder that stores preset notes (default `folder-forge`) |
-| Current preset | The preset file currently loaded |
+| Preset location | Parent folder; presets live in a `folder-forge` subfolder (empty = vault root) |
+| Preset folder | Read-only path of the current preset folder |
+| Preset | Dropdown to switch presets, or choose "Don't use a preset" |
 | Date order and separator | Year-month-day, month-day-year (US), day-month-year (EU) |
 | Month style | Numbers (11) / short name (Nov) / full name (November) |
 | Time | Include or not, minutes or seconds, separator |
@@ -112,16 +115,34 @@ Same-name conflicts, missing target folders and existing index notes are all rep
 
 A preset is a normal Markdown note. Its body is the folder tree; its frontmatter can carry the settings for that run.
 
+Presets live in a `folder-forge` folder. By default that is `/folder-forge` at the vault root; set **Preset location** to any folder and the plugin uses `<that folder>/folder-forge` instead. The folder is created on the first save.
+
+Use the **Preset** dropdown to switch or disable the active preset. **Read external preset** loads any note in the vault; **Save** overwrites the current preset and **Save as preset** creates a new one.
+
 ```markdown
 ---
 folder-forge-preset: true
 basePath: Journal/2026
 mode: auto
-template: Templates/Journal.md
-index:
-  enabled: true
-  name: readme
-  scope: bottom
+contentMode: template
+templates:
+  "": Templates/Journal.md
+  "Journal/2026": Templates/Year.md
+replacePlaceholders: true
+indexEnabled: true
+indexName: readme
+indexScope: bottom
+indexContentMode: text
+indexContentText: |
+  # {{folderName}}
+indexTemplate: ""
+replaceIndexPlaceholders: true
+dateOrder: mdy
+dateSeparator: /
+monthStyle: short
+includeTime: true
+timePrecision: second
+timeSeparator: ":"
 ---
 
 January
@@ -131,18 +152,32 @@ January
 
 | Field | Meaning |
 | --- | --- |
-| `basePath` | Target folder for this run |
+| `basePath` | Target folder |
 | `mode` | `tree` / `auto` / `folder` / `file` |
-| `template` | Template used for the notes |
-| `indexTemplate` | Template used for index notes |
-| `index.enabled` / `index.name` / `index.scope` | Index note settings |
-| `templates` | Per-folder templates (see below) |
+| `contentMode` | New note content: `blank` / `text` / `template` |
+| `contentText` | Text content (block scalar supported) |
+| `replacePlaceholders` | Placeholder replacement for notes |
+| `indexEnabled` | Create folder index notes |
+| `indexName` / `indexScope` | Index file name (`same` / `readme`) and scope |
+| `indexContentMode` | Index content: `blank` / `text` / `template` |
+| `indexContentText` | Index text content (block scalar supported) |
+| `indexTemplate` | Template path for index notes |
+| `replaceIndexPlaceholders` | Placeholder replacement for index notes |
+| `dateOrder` / `dateSeparator` / `monthStyle` | Date format |
+| `includeTime` / `timePrecision` / `timeSeparator` | Time format |
+| `templates` | Per-folder templates; the empty key `""` is the default template |
 
-Frontmatter only applies to that run; your global settings stay untouched.
+Older presets may still contain a `template` field; it is read as the default template and saved back as `templates[""]`.
 
-Use **Structure presets → Choose preset** to load a preset, **Save to preset** to write the text box back, and **Save as…** to create a new one. The command **Create from a preset** runs a preset directly from the command palette.
+Loading a preset applies these settings to the settings tab; **Save** writes the current settings back into the frontmatter. When a preset is active, the settings tab shows a toggle button to switch between the preset settings and the settings you had before loading it.
+
+Use the **Preset** dropdown to switch presets, **Read external preset** to load any note, **Save** to write the text box back, and **Save as preset** to create a new one. The command **Create from a preset** runs a preset directly from the command palette.
 
 ### Per-folder templates
+
+Click **Edit** next to **Templates by folder** in the settings tab to open the rule editor: add a folder, pick its template, and repeat. Leave the folder empty to set the default template. A rule key can be a full path (`Journal/2026`) or just a folder name (`2026`); a name matches that folder at any depth. Full-path rules win over name rules, and `""` is the fallback.
+
+The same rules are stored in the preset frontmatter:
 
 ```markdown
 templates:
@@ -150,8 +185,6 @@ templates:
   "Journal/2026": "Templates/Year.md"
   "": "Templates/Default.md"
 ```
-
-The plugin picks the longest matching folder prefix: `Journal/2026/01.md` uses `Templates/Year.md`, `Journal/other.md` uses `Templates/Journal.md`, and everything else uses the empty-key default.
 
 ## Date and time
 
@@ -206,7 +239,8 @@ The first version was based on the "auto generate folders" plugin by the Bilibil
 - 目标位置用仓库相对路径，默认仓库根目录，也可以用文件夹选择器
 - 同名文件处理：询问 / 跳过 / 覆盖 / 终止
 - 文件夹索引（folder note）：与文件夹同名或 `README.md`
-- 新建笔记和索引笔记的初始内容分开设置：空白 / 自定义文本 / 模板文件
+- 新建笔记和索引笔记的初始内容分开设置：空白 / 自定义文本 / 模板文件 / 多个模板
+- 按文件夹指定模板，可在设置页里可视化编辑
 - 占位符：文件名、文件夹名、路径、日期时间
 - 界面中英文，跟随 Obsidian 语言
 - 桌面端和移动端都能用
@@ -263,16 +297,34 @@ BRAT：添加 `Gowntn/obsidian-folder-forge` 后启用。
 
 预设就是一个普通的 Markdown 笔记：正文是目录树，frontmatter 可以带上这次生成要用的设置。
 
+预设放在 `folder-forge` 文件夹里。默认是仓库根目录的 `/folder-forge`；在「预设位置」里选一个父目录，就会改用「父目录/folder-forge」。文件夹在首次保存时自动创建。
+
+用「预设」下拉直接切换或停用；「读取外部预设」可以从全库任意笔记加载；「保存」覆盖当前预设，「另存为预设」新建一个。
+
 ```markdown
 ---
 folder-forge-preset: true
 basePath: 日记/2026
 mode: auto
-template: 模板/日记.md
-index:
-  enabled: true
-  name: readme
-  scope: bottom
+contentMode: template
+templates:
+  "": 模板/日记.md
+  "日记/2026": 模板/年度.md
+replacePlaceholders: true
+indexEnabled: true
+indexName: readme
+indexScope: bottom
+indexContentMode: text
+indexContentText: |
+  # {{folderName}}
+indexTemplate: ""
+replaceIndexPlaceholders: true
+dateOrder: mdy
+dateSeparator: /
+monthStyle: short
+includeTime: true
+timePrecision: second
+timeSeparator: ":"
 ---
 
 一月
@@ -282,18 +334,28 @@ index:
 
 | 字段 | 说明 |
 | --- | --- |
-| `basePath` | 本次生成的目标目录 |
+| `basePath` | 目标目录 |
 | `mode` | `tree` / `auto` / `folder` / `file` |
-| `template` | 普通笔记用的模板 |
-| `indexTemplate` | 索引笔记用的模板 |
-| `index.enabled` / `index.name` / `index.scope` | 索引文件设置 |
-| `templates` | 按文件夹指定模板（见下） |
+| `contentMode` | 新笔记内容来源：`blank` / `text` / `template` |
+| `contentText` | 自定义文本，支持多行块 |
+| `replacePlaceholders` | 普通笔记是否替换占位符 |
+| `indexEnabled` | 是否生成文件夹索引 |
+| `indexName` / `indexScope` | 索引文件名（`same` / `readme`）与范围 |
+| `indexContentMode` | 索引内容来源：`blank` / `text` / `template` |
+| `indexContentText` | 索引文本，支持多行块 |
+| `indexTemplate` | 索引笔记的模板路径 |
+| `replaceIndexPlaceholders` | 索引笔记是否替换占位符 |
+| `dateOrder` / `dateSeparator` / `monthStyle` | 日期格式 |
+| `includeTime` / `timePrecision` / `timeSeparator` | 时间格式 |
+| `templates` | 按文件夹模板；键 `""` 表示默认模板 |
 
-frontmatter 只对本次生成生效，不会改你的全局设置。
+旧预设里可能还有 `template` 字段，读取时会当作默认模板，保存时合并进 `templates[""]`。
 
-设置页「结构预设」里：**选择预设** 读取、**保存到预设** 写回、**另存为…** 新建；命令面板里有「**从预设生成**」，选完直接跑。
+读取预设会把 frontmatter 里的设置套用到设置页；点「保存」会把当前设置写回 frontmatter。预设生效时，设置页里有一个切换按钮，可以在预设设置和读取前的设置之间来回对比。
 
-按文件夹套用模板：
+设置页「结构预设」里：**预设** 下拉直接切换、**读取外部预设** 加载全库任意笔记、**保存** 写回当前预设、**另存为预设** 新建；命令面板里有「**从预设生成**」，选完直接跑。
+
+按文件夹套用模板：在设置页「按文件夹模板」旁点「编辑」，添加文件夹、选择模板即可；文件夹留空表示默认模板。规则里的文件夹可以写完整路径（`日记/2026`），也可以只写文件夹名（`2026`）——只写名字时，任意层级下同名的文件夹都会匹配；完整路径优先于名字，`""` 是最后的默认值。也可以直接写在预设 frontmatter 里：
 
 ```markdown
 templates:
